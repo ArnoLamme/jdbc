@@ -2,26 +2,29 @@ package be.vdab;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.Scanner;
 
 public class Main {
     private static final String URL = "jdbc:mysql://localhost/tuincentrum?useSSL=false";
     private static final String USER = "cursist";
     private static final String PASSWORD = "cursist";
-    private static final String SELECT = "select naam, aantalkinderen from leveranciers order by naam";
+    private static final String SELECT = "select naam from leveranciers where woonplaats = ?";
     
     public static void main(String[] args) {
+        System.out.println("Woonplaats:");
+        String woonplaats = new Scanner(System.in).nextLine();
         try(Connection connection  = DriverManager.getConnection(URL, USER, PASSWORD);
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(SELECT)){
+            PreparedStatement statement = connection.prepareStatement(SELECT)){
             //System.out.println("Connectie geopend");
             //System.out.println(statement.executeUpdate(UPDATE_PRIJS));
-            while(resultSet.next()){
-                System.out.print(resultSet.getString("naam") + " ");
-                int aantalKinderen = resultSet.getInt("aantalkinderen");
-                System.out.println(resultSet.wasNull()?"onbekend":aantalKinderen);
+            statement.setString(1, woonplaats);
+            try(ResultSet resultSet = statement.executeQuery()){
+                while(resultSet.next()){
+                    System.out.println(resultSet.getString("naam"));
+                }
             }
         }
         catch(SQLException ex){
