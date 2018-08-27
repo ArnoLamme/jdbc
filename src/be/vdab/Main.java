@@ -19,7 +19,7 @@ public class Main {
             //System.out.println("Connectie geopend");
             //System.out.println(statement.executeUpdate(UPDATE_PRIJS));
             while(resultSet.next()){
-                System.out.println(resultSet.getInt(1) + " " + resultSet.getString(2));
+                System.out.println(resultSet.getInt("id") + " " + resultSet.getString("naam"));
             }
         }
         catch(SQLException ex){
