@@ -2,21 +2,19 @@ package be.vdab.oef;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.Scanner;
 
 public class Main {
     private static final String URL = "jdbc:mysql://localhost/bieren?useSSL=false";
     private static final String USER = "cursist";
     private static final String PASSWORD = "cursist";
-//    private static final String QUERY = "delete from bieren where alcohol is null";
-    private static final String QUERY = "select brouwernaam, aantalbieren "
-            + "from (select brouwers.naam as brouwernaam, count(bieren.id) as aantalbieren "
-            + "from brouwers inner join bieren on brouwers.id = bieren.brouwerid "
-            + "group by brouwers.id, brouwers.naam) as temp "
-            + "where temp.aantalbieren > 0 "
-            + "order by brouwernaam";
+    private static final String QUERY = "select naam, alcohol "
+            + "from bieren "
+            + "where alcohol > ? and alcohol < ? "
+            + "order by  alcohol, naam";
     
     public static void main(String[] args) {
 //        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -26,12 +24,30 @@ public class Main {
 //        catch(SQLException ex){
 //            ex.printStackTrace(System.err);
 //        }
+//
+//        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+//                Statement statement = connection.createStatement();
+//                ResultSet resultSet = statement.executeQuery(QUERY)){
+//            while(resultSet.next()){
+//                System.out.println(resultSet.getString("brouwernaam") + " " + resultSet.getInt("aantalbieren"));
+//            }
+//        }
+//        catch(SQLException ex){
+//            ex.printStackTrace(System.err);
+//        }
 
+        System.out.println("Alcohol tussen?");
+        Scanner sc = new Scanner(System.in);
+        int min = sc.nextInt();
+        int max = sc.nextInt();
         try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(QUERY)){
-            while(resultSet.next()){
-                System.out.println(resultSet.getString("brouwernaam") + " " + resultSet.getInt("aantalbieren"));
+                PreparedStatement statement = connection.prepareStatement(QUERY)){
+            statement.setInt(1, min);
+            statement.setInt(2, max);
+            try(ResultSet resultSet = statement.executeQuery()){
+                while(resultSet.next()){
+                    System.out.println(resultSet.getString("naam") + " " + resultSet.getInt("alcohol"));
+                }
             }
         }
         catch(SQLException ex){
