@@ -1,8 +1,8 @@
 package be.vdab.oef;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
@@ -11,10 +11,7 @@ public class Main {
     private static final String URL = "jdbc:mysql://localhost/bieren?useSSL=false";
     private static final String USER = "cursist";
     private static final String PASSWORD = "cursist";
-    private static final String QUERY = "select naam, alcohol "
-            + "from bieren "
-            + "where alcohol > ? and alcohol < ? "
-            + "order by  alcohol, naam";
+    private static final String QUERY = "{call TussenAlcohol(?, ?)}";
     
     public static void main(String[] args) {
 //        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -35,18 +32,36 @@ public class Main {
 //        catch(SQLException ex){
 //            ex.printStackTrace(System.err);
 //        }
+//
+//        System.out.println("Alcohol tussen?");
+//        Scanner sc = new Scanner(System.in);
+//        int min = sc.nextInt();
+//        int max = sc.nextInt();
+//        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+//                PreparedStatement statement = connection.prepareStatement(QUERY)){
+//            statement.setInt(1, min);
+//            statement.setInt(2, max);
+//            try(ResultSet resultSet = statement.executeQuery()){
+//                while(resultSet.next()){
+//                    System.out.println(resultSet.getString("naam") + " " + resultSet.getInt("alcohol"));
+//                }
+//            }
+//        }
+//        catch(SQLException ex){
+//            ex.printStackTrace(System.err);
+//        }
 
         System.out.println("Alcohol tussen?");
         Scanner sc = new Scanner(System.in);
         int min = sc.nextInt();
         int max = sc.nextInt();
         try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                PreparedStatement statement = connection.prepareStatement(QUERY)){
+                CallableStatement statement = connection.prepareCall(QUERY)){
             statement.setInt(1, min);
             statement.setInt(2, max);
             try(ResultSet resultSet = statement.executeQuery()){
                 while(resultSet.next()){
-                    System.out.println(resultSet.getString("naam") + " " + resultSet.getInt("alcohol"));
+                    System.out.println(resultSet.getString("naam") + " " + resultSet.getString("brouwernaam") + " " + resultSet.getInt("alcohol"));
                 }
             }
         }
