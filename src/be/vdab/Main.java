@@ -13,10 +13,8 @@ public class Main {
     
     public static void main(String[] args) {
         try(Connection connection  = DriverManager.getConnection(URL, USER, PASSWORD)){
-            //System.out.println("Connectie geopend");
-            //System.out.println(statement.executeUpdate(UPDATE_PRIJS));
             DatabaseMetaData metaData = connection.getMetaData();
-            System.out.println(metaData.getDriverName() + " " + metaData.getDriverMajorVersion() + " " + metaData.getDriverMinorVersion());
+            System.out.println(metaData.getDatabaseProductName() + " " + metaData.getDatabaseMajorVersion() + " " + metaData.getDatabaseMinorVersion());
         }
         catch(SQLException ex){
             ex.printStackTrace(System.err);
