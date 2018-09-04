@@ -1,42 +1,33 @@
 package be.vdab;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Scanner;
 
 public class Main {
     private static final String URL = "jdbc:mysql://localhost/tuincentrum?useSSL=false";
     private static final String USER = "cursist";
     private static final String PASSWORD = "cursist";
-    private static final String UPDATE = "update planten "
-            + "set verkoopprijs = verkoopprijs * (1 + ? / 100) "
-            + "where verkoopprijs between ? and ?";
+    private static final String INSERT = "insert into soorten(naam) values(?)";
     
     public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("% voor prijzen kleiner dan 100:");
-        BigDecimal percentageKleinerDan100 = scanner.nextBigDecimal();
-        System.out.println("% voor prijzen vanaf 100:");
-        BigDecimal percentageVanaf100 = scanner.nextBigDecimal();
+        System.out.println("Naam:");
+        String naam = new Scanner(System.in).nextLine();
         try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                PreparedStatement statement = connection.prepareStatement(UPDATE)){
-            statement.setBigDecimal(1, percentageKleinerDan100);
-            statement.setBigDecimal(2, BigDecimal.ZERO);
-            statement.setBigDecimal(3, BigDecimal.valueOf(99.99));
-            statement.addBatch();
-            statement.setBigDecimal(1, percentageVanaf100);
-            statement.setBigDecimal(2, BigDecimal.valueOf(100));
-            statement.setBigDecimal(3, BigDecimal.valueOf(999_999));
-            statement.addBatch();
+                PreparedStatement statement = connection.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS)){
             connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            statement.setString(1, naam);
             connection.setAutoCommit(false);
-            int[] aantalGewijzigdeRecordsPerUpdate = statement.executeBatch();
-            System.out.println(aantalGewijzigdeRecordsPerUpdate[0] + " planten verhoogd met " + percentageKleinerDan100 + "%");
-            System.out.println(aantalGewijzigdeRecordsPerUpdate[1] + " planten verhoogd met " + percentageVanaf100 + "%");
-            connection.commit();
+            statement.executeUpdate();
+            try(ResultSet resultSet = statement.getGeneratedKeys()){
+                resultSet.next();
+                System.out.println(resultSet.getLong(1));
+                connection.commit();
+            }
         }
         catch(SQLException ex){
             ex.printStackTrace(System.err);
