@@ -76,10 +76,12 @@ public class Main {
 
         try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
                 Statement statement = connection.createStatement()){
+            statement.addBatch(QUERY);
+            statement.addBatch(QUERY2);
+            statement.addBatch(QUERY3);
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
             connection.setAutoCommit(false);
-            statement.executeUpdate(QUERY);
-            statement.executeUpdate(QUERY2);
-            statement.executeUpdate(QUERY3);
+            statement.executeBatch();
             connection.commit();
         }
         catch(SQLException ex){
