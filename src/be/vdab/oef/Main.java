@@ -2,18 +2,21 @@ package be.vdab.oef;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.Scanner;
 
 public class Main {
     private static final String URL = "jdbc:mysql://localhost/bieren?useSSL=false";
     private static final String USER = "cursist";
     private static final String PASSWORD = "cursist";
-    private static final String QUERY = "select brouwers.naam as brouwernaam, count(bieren.naam) as aantalbieren "
-            + "from brouwers inner join bieren on brouwers.id = brouwerid "
-            + "where omzet is null "
-            + "group by brouwers.naam";
+    private static final String QUERY = "select bieren.naam as bier "
+            + "from bieren inner join soorten on soortid = soorten.id "
+            + "where soorten.naam = ?";
+    private static final String QUERY2 = "select id "
+            + "from soorten "
+            + "where naam = ?";
     
     public static void main(String[] args) {
 //        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -102,15 +105,45 @@ public class Main {
 //        catch(SQLException ex){
 //            ex.printStackTrace(System.err);
 //        }
+//
+//
+//        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+//                Statement statement = connection.createStatement()){
+//            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+//            connection.setAutoCommit(false);
+//            try(ResultSet resultSet = statement.executeQuery(QUERY)){
+//                while(resultSet.next()){
+//                    System.out.println(resultSet.getString("brouwernaam") + " " + resultSet.getInt("aantalbieren") + " bier(en)");
+//                }
+//            }
+//            connection.commit();
+//        }
+//        catch(SQLException ex){
+//            ex.printStackTrace(System.err);
+//        }
 
-
+        System.out.println("Biersoort?");
+        String soort = new Scanner(System.in).nextLine();
         try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                Statement statement = connection.createStatement()){
+                PreparedStatement statement = connection.prepareStatement(QUERY);
+                PreparedStatement controle = connection.prepareStatement(QUERY2)){
+            statement.setString(1, soort);
+            controle.setString(1, soort);
             connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
             connection.setAutoCommit(false);
-            try(ResultSet resultSet = statement.executeQuery(QUERY)){
-                while(resultSet.next()){
-                    System.out.println(resultSet.getString("brouwernaam") + " " + resultSet.getInt("aantalbieren") + " bier(en)");
+            try(ResultSet resultSet = statement.executeQuery()){
+                if(resultSet.next()){
+                    System.out.println(resultSet.getString("bier"));
+                    while(resultSet.next()){
+                        System.out.println(resultSet.getString("bier"));
+                    }
+                }
+                else{
+                    try(ResultSet controleSet = controle.executeQuery()){
+                        if(!controleSet.next()){
+                            System.out.println("FOUT: soort bestaat niet");
+                        }
+                    }
                 }
             }
             connection.commit();
