@@ -2,19 +2,18 @@ package be.vdab.oef;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Scanner;
+import java.sql.Statement;
 
 public class Main {
     private static final String URL = "jdbc:mysql://localhost/bieren?useSSL=false";
     private static final String USER = "cursist";
     private static final String PASSWORD = "cursist";
-    private static final String QUERY = "select verkochtsinds, naam "
-            + "from bieren "
-            + "where {fn month(verkochtsinds)} = ? "
-            + "order by verkochtsinds";
+    private static final String QUERY = "select brouwers.naam as brouwernaam, count(bieren.naam) as aantalbieren "
+            + "from brouwers inner join bieren on brouwers.id = brouwerid "
+            + "where omzet is null "
+            + "group by brouwers.naam";
     
     public static void main(String[] args) {
 //        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -85,17 +84,33 @@ public class Main {
 //        catch(SQLException ex){
 //            ex.printStackTrace(System.err);
 //        }
+//
+//        System.out.println("Maand?");
+//        int maand = new Scanner(System.in).nextInt();
+//        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+//                PreparedStatement statement = connection.prepareStatement(QUERY)){
+//            statement.setInt(1, maand);
+//            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+//            connection.setAutoCommit(false);
+//            try(ResultSet resultSet = statement.executeQuery()){
+//                while(resultSet.next()){
+//                    System.out.println(resultSet.getDate("verkochtsinds") + " " + resultSet.getString("naam"));
+//                }
+//            }
+//            connection.commit();
+//        }
+//        catch(SQLException ex){
+//            ex.printStackTrace(System.err);
+//        }
 
-        System.out.println("Maand?");
-        int maand = new Scanner(System.in).nextInt();
+
         try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                PreparedStatement statement = connection.prepareStatement(QUERY)){
-            statement.setInt(1, maand);
+                Statement statement = connection.createStatement()){
             connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
             connection.setAutoCommit(false);
-            try(ResultSet resultSet = statement.executeQuery()){
+            try(ResultSet resultSet = statement.executeQuery(QUERY)){
                 while(resultSet.next()){
-                    System.out.println(resultSet.getDate("verkochtsinds") + " " + resultSet.getString("naam"));
+                    System.out.println(resultSet.getString("brouwernaam") + " " + resultSet.getInt("aantalbieren") + " bier(en)");
                 }
             }
             connection.commit();
