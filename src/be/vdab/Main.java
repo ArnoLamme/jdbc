@@ -28,7 +28,7 @@ public class Main {
                     System.out.println();
                 }
             }
-            connection.commit();  //
+            connection.commit();
         }
         catch(SQLException ex){
             ex.printStackTrace(System.err);
