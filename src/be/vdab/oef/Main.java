@@ -2,21 +2,19 @@ package be.vdab.oef;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.Scanner;
 
 public class Main {
     private static final String URL = "jdbc:mysql://localhost/bieren?useSSL=false";
     private static final String USER = "cursist";
     private static final String PASSWORD = "cursist";
-    private static final String QUERY = "update bieren "
-            + "set brouwerid = 2 "
-            + "where brouwerid = 1 and alcohol >= 8.5";
-    private static final String QUERY2 = "update bieren "
-            + "set brouwerid = 3 "
-            + "where brouwerid = 1";
-    private static final String QUERY3 = "delete from brouwers "
-            + "where id = 1";
+    private static final String QUERY = "select verkochtsinds, naam "
+            + "from bieren "
+            + "where {fn month(verkochtsinds)} = ? "
+            + "order by verkochtsinds";
     
     public static void main(String[] args) {
 //        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -73,15 +71,33 @@ public class Main {
 //        catch(SQLException ex){
 //            ex.printStackTrace(System.err);
 //        }
+//
+//        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+//                Statement statement = connection.createStatement()){
+//            statement.addBatch(QUERY);
+//            statement.addBatch(QUERY2);
+//            statement.addBatch(QUERY3);
+//            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+//            connection.setAutoCommit(false);
+//            statement.executeBatch();
+//            connection.commit();
+//        }
+//        catch(SQLException ex){
+//            ex.printStackTrace(System.err);
+//        }
 
+        System.out.println("Maand?");
+        int maand = new Scanner(System.in).nextInt();
         try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                Statement statement = connection.createStatement()){
-            statement.addBatch(QUERY);
-            statement.addBatch(QUERY2);
-            statement.addBatch(QUERY3);
+                PreparedStatement statement = connection.prepareStatement(QUERY)){
+            statement.setInt(1, maand);
             connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
             connection.setAutoCommit(false);
-            statement.executeBatch();
+            try(ResultSet resultSet = statement.executeQuery()){
+                while(resultSet.next()){
+                    System.out.println(resultSet.getDate("verkochtsinds") + " " + resultSet.getString("naam"));
+                }
+            }
             connection.commit();
         }
         catch(SQLException ex){
