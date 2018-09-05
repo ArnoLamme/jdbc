@@ -10,19 +10,22 @@ public class Main {
     private static final String URL = "jdbc:mysql://localhost/tuincentrum?useSSL=false";
     private static final String USER = "cursist";
     private static final String PASSWORD = "cursist";
-    private static final String SELECT = "select geboorte, voornaam, familienaam "
-            + "from werknemers "
-            + "where {fn month(geboorte)} = {fn month({fn curdate()})} "
-            + "order by {fn dayofmonth(geboorte)}";
+    private static final String SELECT = "select id, voornaam, familienaam, geboorte, indienst "
+            + "from werknemers";
     
-    public static void main(String[] args) {
-        try(Connection connection  = DriverManager.getConnection(URL, USER, PASSWORD);
+    public static void main(String[] arrays){
+        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
                 Statement statement = connection.createStatement()){
             connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
             connection.setAutoCommit(false);
             try(ResultSet resultSet = statement.executeQuery(SELECT)){
                 while(resultSet.next()){
-                    System.out.println(resultSet.getDate("geboorte") + " " + resultSet.getString("voornaam") + " " + resultSet.getString("familienaam"));
+                    Werknemer werknemer = new Werknemer(resultSet.getLong("id"), resultSet.getString("voornaam"), resultSet.getString("familienaam"), resultSet.getDate("geboorte").toLocalDate(), resultSet.getDate("indienst").toLocalDate());
+                    System.out.print(werknemer);
+                    if(werknemer.isJarig()){
+                        System.out.print(" JARIG");
+                    }
+                    System.out.println();
                 }
             }
             connection.commit();
