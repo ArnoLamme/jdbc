@@ -35,6 +35,7 @@ public class Main {
                     maakNieuweRekening(sc.nextLong());
                 }
                 catch(InputMismatchException ex){
+                    System.out.println();
                     System.out.println("Ongeldige input");
                 }
                 break;
@@ -45,6 +46,7 @@ public class Main {
                     vraagSaldo(sc.nextLong());
                 }
                 catch(InputMismatchException ex){
+                    System.out.println();
                     System.out.println("Ongeldige input");
                 }
                 break;
@@ -60,11 +62,13 @@ public class Main {
                     overschrijving(rekVan, rekNaar, bedrag);
                 }
                 catch(InputMismatchException ex){
+                    System.out.println();
                     System.out.println("Ongeldige input");
                 }
                 break;
                 
             default:
+                System.out.println();
                 System.out.println("Ongeldige input");
                 break;
         }
@@ -72,7 +76,6 @@ public class Main {
     
     private static void maakNieuweRekening(long reknr){
         if(Rekening.valideerRekening(reknr)){
-            System.out.println("Geldig rekeningnummer");
             String query = "insert into rekeningen (rekeningnr) "
                     + "values (?)";
             
@@ -83,9 +86,17 @@ public class Main {
                 connection.setAutoCommit(false);
                 statement.executeUpdate();
                 connection.commit();
+                System.out.println();
+                System.out.println("Geldig rekeningnummer");
             }
             catch(SQLException ex){
-                ex.printStackTrace(System.err);
+                if(ex.getMessage().startsWith("Duplicate entry")){
+                    System.out.println();
+                    System.out.println("Ongeldige input - rekeningnummer bestaat al");
+                }
+                else{
+                    ex.printStackTrace(System.err);
+                }
             }
         }
         else{
