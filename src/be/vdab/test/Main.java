@@ -6,6 +6,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Main {
@@ -19,97 +20,114 @@ public class Main {
         System.out.println("2 - Saldo consulteren");
         System.out.println("3 - Overschrijven");
         Scanner sc = new Scanner(System.in);
-        int optie = sc.nextInt();
+        int optie = 0;  //optie initialiseren
+        try{
+            optie = sc.nextInt();   //input lezen
+        }
+        catch(InputMismatchException ex){
+        }
+        System.out.println();
+        
         switch(optie){
-            case 1: 
+            case 1: //nieuwe rekening
                 System.out.println("Geef een nieuw rekeningnummer");
-                long nieuwnr = sc.nextLong();
-                if(valideerRekening(nieuwnr)){
-                    System.out.println("geldig rekeningnummer");
-                    maakNieuweRekening(nieuwnr);
+                try{
+                    maakNieuweRekening(sc.nextLong());
                 }
-                else{
-                    System.out.println("ongeldig rekeningnummer");
+                catch(InputMismatchException ex){
+                    System.out.println("Ongeldige input");
                 }
                 break;
                 
-            case 2:
-                System.out.println("Geef een rekeningnummer op:");
-                long reknr = sc.nextLong();
-                vraagSaldo(reknr);
+            case 2: //saldo consulteren
+                System.out.println("Geef het rekeningnummer:");
+                try{
+                    vraagSaldo(sc.nextLong());
+                }
+                catch(InputMismatchException ex){
+                    System.out.println("Ongeldige input");
+                }
                 break;
                 
-            case 3:
-                System.out.println("Overschrijven van?");
-                long rekVan = sc.nextLong();
-                System.out.println("naar?");
-                long rekNaar = sc.nextLong();
-                System.out.println("bedrag?");
-                BigDecimal bedrag = sc.nextBigDecimal();
-                overschrijving(rekVan, rekNaar, bedrag);
+            case 3: //overschrijving
+                try{
+                    System.out.println("Overschrijven van?");
+                    long rekVan = sc.nextLong();
+                    System.out.println("naar?");
+                    long rekNaar = sc.nextLong();
+                    System.out.println("bedrag?");
+                    BigDecimal bedrag = sc.nextBigDecimal();
+                    overschrijving(rekVan, rekNaar, bedrag);
+                }
+                catch(InputMismatchException ex){
+                    System.out.println("Ongeldige input");
+                }
                 break;
                 
             default:
-                System.out.println("Ongeldige optie");
+                System.out.println("Ongeldige input");
                 break;
         }
     }
     
-    public static boolean valideerRekening(long reknr){
-        if(reknr > 0 && (int) Math.log10(reknr) + 1 == 12){ //controleer lengte
-            long eerste10 = reknr / 100;
-            long laatste2 = reknr % 100;
-            return eerste10 % 97 == laatste2;
-        }
-        return false;
-    }
-    
     private static void maakNieuweRekening(long reknr){
-        String query = "insert into rekeningen (rekeningnr) "
-                + "values (?)";
-        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                PreparedStatement statement = connection.prepareStatement(query)){
-            statement.setLong(1, reknr);
-            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-            connection.setAutoCommit(false);
-            statement.executeUpdate();
-            connection.commit();
+        if(Rekening.valideerRekening(reknr)){
+            System.out.println("Geldig rekeningnummer");
+            String query = "insert into rekeningen (rekeningnr) "
+                    + "values (?)";
+            
+            try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+                    PreparedStatement statement = connection.prepareStatement(query)){
+                statement.setLong(1, reknr);
+                connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+                connection.setAutoCommit(false);
+                statement.executeUpdate();
+                connection.commit();
+            }
+            catch(SQLException ex){
+                ex.printStackTrace(System.err);
+            }
         }
-        catch(SQLException ex){
-            ex.printStackTrace(System.err);
+        else{
+            System.out.println("Ongeldig rekeningnummer");
         }
     }
     
     private static void vraagSaldo(long reknr){
-        String query = "select saldo "
-                + "from rekeningen "
-                + "where rekeningnr = ?";
-        try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                PreparedStatement statement = connection.prepareStatement(query)){
-            statement.setLong(1, reknr);
-            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-            connection.setAutoCommit(false);
-            try(ResultSet resultSet = statement.executeQuery()){
-                if(resultSet.next()){
-                    System.out.println("Saldo: " + resultSet.getBigDecimal("saldo"));
-                }
-                else{
-                    System.out.println("Rekeningnummer niet in database");
+        if(Rekening.valideerRekening(reknr)){
+            String query = "select saldo "
+                    + "from rekeningen "
+                    + "where rekeningnr = ?";
+            try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+                    PreparedStatement statement = connection.prepareStatement(query)){
+                statement.setLong(1, reknr);
+                connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+                connection.setAutoCommit(false);
+                try(ResultSet resultSet = statement.executeQuery()){
+                    if(resultSet.next()){
+                        System.out.println("Saldo: " + resultSet.getBigDecimal("saldo"));
+                    }
+                    else{
+                        System.out.println("Rekeningnummer niet in database");
+                    }
                 }
             }
+            catch(SQLException ex){
+                ex.printStackTrace(System.err);
+            }
         }
-        catch(SQLException ex){
-            ex.printStackTrace(System.err);
+        else{
+            System.out.println("Ongeldig rekeningnummer");
         }
     }
     
     private static void overschrijving(long rekVan, long rekNaar, BigDecimal bedrag){
-        if(rekVan != rekNaar && bedrag.compareTo(BigDecimal.ZERO) > 0){
-            String query = "select saldo "
+        if(Rekening.valideerRekening(rekVan) && Rekening.valideerRekening(rekNaar) && rekVan != rekNaar && bedrag.compareTo(BigDecimal.ZERO) > 0){ //controle op geldige parameters
+            String query = "select saldo "  //queries
                     + "from rekeningen "
                     + "where rekeningnr = ?";
             String update = "update rekeningen "
-                    + "set saldo = saldo + ? "
+                    + "set saldo = ? "
                     + "where rekeningnr = ?";
             
             try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -117,28 +135,35 @@ public class Main {
                     PreparedStatement updateStatement = connection.prepareStatement(update)){
                 connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
                 connection.setAutoCommit(false);
+                Rekening rekeningVan = new Rekening(rekVan);
+                Rekening rekeningNaar = new Rekening(rekNaar);
+                
                 queryStatement.setLong(1, rekVan);
                 try(ResultSet resultSet = queryStatement.executeQuery()){
                     if(resultSet.next()){
-                        if(resultSet.getBigDecimal("saldo").compareTo(bedrag) <= 0){
-                            throw new Exception("Ongeldige overschrijving - te groot bedrag");
-                        }
+                        rekeningVan.setSaldo(resultSet.getBigDecimal("saldo"));
                     }
                     else{
                         throw new Exception("Ongeldige overschrijving - rekeningnummer bestaat niet");
                     }
                 }
+                
                 queryStatement.setLong(1, rekNaar);
                 try(ResultSet resultSet = queryStatement.executeQuery()){
-                    if(!resultSet.next()){
+                    if(resultSet.next()){
+                        rekeningNaar.setSaldo(resultSet.getBigDecimal("saldo"));
+                    }
+                    else{
                         throw new Exception("Ongeldige overschrijving - rekeningnummer bestaat niet");
                     }
                 }
-                updateStatement.setBigDecimal(1, bedrag.negate());
-                updateStatement.setLong(2, rekVan);
+                
+                rekeningVan.overschrijving(rekeningNaar, bedrag);
+                updateStatement.setBigDecimal(1, rekeningVan.getSaldo());
+                updateStatement.setLong(2, rekeningVan.getRekeningNr());
                 updateStatement.execute();
-                updateStatement.setBigDecimal(1, (bedrag));
-                updateStatement.setLong(2, rekNaar);
+                updateStatement.setBigDecimal(1, rekeningNaar.getSaldo());
+                updateStatement.setLong(2, rekeningNaar.getRekeningNr());
                 updateStatement.execute();
                 connection.commit();
             }
