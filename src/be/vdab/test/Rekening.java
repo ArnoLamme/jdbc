@@ -38,12 +38,12 @@ public class Rekening {
     }
     
     public void overschrijving(Rekening rekening, BigDecimal bedrag) throws Exception{
-        if(this.saldo.compareTo(bedrag) >= 0){
+        if(this.saldo.compareTo(bedrag) >= 0 && bedrag.compareTo(BigDecimal.ZERO) > 0){
             rekening.setSaldo(rekening.getSaldo().add(bedrag));
             this.setSaldo(this.saldo.subtract(bedrag));
         }
         else{
-            throw new Exception("Ongeldige overschrijving - bedrag te groot");
+            throw new Exception("Ongeldige overschrijving - ongeldig bedrag");
         }
     }
 }
