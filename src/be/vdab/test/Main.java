@@ -109,10 +109,8 @@ public class Main {
                     + "from rekeningen "
                     + "where rekeningnr = ?";
             String update = "update rekeningen "
-                    + "set saldo = ? "
+                    + "set saldo = saldo + ? "
                     + "where rekeningnr = ?";
-//            BigDecimal saldoVan = BigDecimal.ZERO;
-//            BigDecimal saldoNaar = BigDecimal.ZERO;
             
             try(Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
                     PreparedStatement queryStatement = connection.prepareStatement(query);
@@ -122,22 +120,18 @@ public class Main {
                 queryStatement.setLong(1, rekVan);
                 try(ResultSet resultSet = queryStatement.executeQuery()){
                     if(resultSet.next()){
-//                        saldoVan = resultSet.getBigDecimal("saldo");
                         if(resultSet.getBigDecimal("saldo").compareTo(bedrag) <= 0){
-                            throw new Exception("Ongeldige overschrijving: te groot bedrag");
+                            throw new Exception("Ongeldige overschrijving - te groot bedrag");
                         }
                     }
                     else{
-                        throw new Exception("Ongeldige overschrijving: rekeningnummer bestaat niet");
+                        throw new Exception("Ongeldige overschrijving - rekeningnummer bestaat niet");
                     }
                 }
                 queryStatement.setLong(1, rekNaar);
                 try(ResultSet resultSet = queryStatement.executeQuery()){
-                    if(resultSet.next()){
-//                        saldoNaar = resultSet.getBigDecimal("saldo");
-                    }
-                    else{
-                        throw new Exception("Ongeldige overschrijving: rekeningnummer bestaat niet");
+                    if(!resultSet.next()){
+                        throw new Exception("Ongeldige overschrijving - rekeningnummer bestaat niet");
                     }
                 }
                 updateStatement.setBigDecimal(1, bedrag.negate());
@@ -152,7 +146,7 @@ public class Main {
                 ex.printStackTrace(System.err);
             }
             catch(Exception ex){
-                ex.printStackTrace(System.err);
+                System.out.println(ex.getMessage());
             }
         }
         else{
