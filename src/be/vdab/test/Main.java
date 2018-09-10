@@ -35,6 +35,7 @@ public class Main {
                     maakNieuweRekening(sc.nextLong());
                 }
                 catch(InputMismatchException ex){
+                    System.out.println();
                     System.out.println("Ongeldige input");
                 }
                 break;
@@ -45,6 +46,7 @@ public class Main {
                     vraagSaldo(sc.nextLong());
                 }
                 catch(InputMismatchException ex){
+                    System.out.println();
                     System.out.println("Ongeldige input");
                 }
                 break;
@@ -60,11 +62,13 @@ public class Main {
                     overschrijving(rekVan, rekNaar, bedrag);
                 }
                 catch(InputMismatchException ex){
+                    System.out.println();
                     System.out.println("Ongeldige input");
                 }
                 break;
                 
             default:
+                System.out.println();
                 System.out.println("Ongeldige input");
                 break;
         }
